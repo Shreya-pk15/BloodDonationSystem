@@ -94,141 +94,88 @@ export default function DonationHistoryPage() {
   }
 
   return (
-    <div style={{ minHeight: "100vh", backgroundColor: "#f8fafc", fontFamily: "'Inter', system-ui, sans-serif", display: "flex", color: "#334155" }}>
+    <div style={{ minHeight: "100vh", backgroundColor: "#f0f2f5", fontFamily: "'Inter', system-ui, sans-serif", color: "#334155" }}>
       <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
 
-      {/* SIDEBAR */}
-      <aside style={{
-        width: "280px", backgroundColor: "#ffffff", borderRight: "1px solid #e2e8f0",
-        display: "flex", flexDirection: "column", padding: "28px 20px", flexShrink: 0,
-        position: "sticky", top: 0, height: "100vh", boxSizing: "border-box"
-      }}>
-        {/* BRANDING */}
-        <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "36px", paddingLeft: "8px" }}>
-          <span style={{ fontSize: "28px" }}>🩸</span>
-          <div>
-            <span style={{ fontSize: "18px", fontWeight: "900", color: "#0f172a", letterSpacing: "-0.5px" }}>HemoLink</span>
-            <div style={{ fontSize: "10px", color: "#e63946", fontWeight: "800", textTransform: "uppercase", letterSpacing: "1.5px", marginTop: "-2px" }}>Donor Hub</div>
-          </div>
+      {/* 🔝 NAVBAR */}
+      <nav style={{ backgroundColor: "white", padding: "15px 30px", boxShadow: "0 2px 10px rgba(0,0,0,0.1)", display: "flex", justifyContent: "space-between", alignItems: "center", position: "sticky", top: 0, zIndex: 100 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "15px" }}>
+          <h2 style={{ margin: 0, color: "#e63946", display: "flex", alignItems: "center", gap: "8px" }}>
+            🩸 Donor Dashboard
+          </h2>
         </div>
 
-        {/* PROFILE MINI-CARD & AVAILABILITY STATE SELECTOR */}
-        <div style={{
-          backgroundColor: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "16px",
-          padding: "16px", marginBottom: "32px", display: "flex", flexDirection: "column", gap: "14px"
-        }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-            <div style={{
-              width: "48px", height: "48px", borderRadius: "50%",
-              backgroundColor: "#fee2e2", border: "2px solid #fff",
-              display: "flex", alignItems: "center", justifyItems: "center",
-              justifyContent: "center", fontSize: "24px", overflow: "hidden",
-              boxShadow: "0 4px 10px rgba(230,57,70,0.1)"
-            }}>
+        <div style={{ display: "flex", gap: "25px", alignItems: "center" }}>
+          <span onClick={() => router.push("/donorDashboard")} style={{ cursor: "pointer", fontSize: "14px", fontWeight: "600", color: "#555", paddingBottom: "5px" }}>
+            Emergency Feed
+          </span>
+          <span onClick={() => router.push("/donorDashboard?tab=messages")} style={{ cursor: "pointer", fontSize: "14px", fontWeight: "600", color: "#555", paddingBottom: "5px" }}>
+            💬 Messages
+          </span>
+          <span style={{ cursor: "pointer", fontSize: "14px", fontWeight: "bold", color: "#e63946", borderBottom: "2px solid #e63946", paddingBottom: "5px" }}>
+            Donation History
+          </span>
+          <span onClick={() => router.push("/donorDashboard?tab=reports")} style={{ cursor: "pointer", fontSize: "14px", fontWeight: "600", color: "#555", paddingBottom: "5px" }}>
+            My Reports
+          </span>
+          <span onClick={() => router.push("/profile")} style={{ cursor: "pointer", fontSize: "14px", fontWeight: "600", color: "#555", paddingBottom: "5px" }}>
+            Profile
+          </span>
+
+          {/* NAVBAR PROFILE SECTION & AVAILABILITY SELECTOR */}
+          {userProfile && (
+            <div style={{ display: "flex", alignItems: "center", gap: "15px", borderLeft: "2px solid #eee", paddingLeft: "20px" }}>
+              {/* Availability Selector Buttons */}
+              <div style={{ display: "flex", borderRadius: "8px", background: "#e5e7eb", padding: "3px", gap: "2px" }}>
+                {["available", "busy", "offline"].map((statusOption) => {
+                  const active = availability === statusOption;
+                  return (
+                    <button
+                      key={statusOption}
+                      onClick={() => updateAvailabilityState(statusOption)}
+                      style={{
+                        border: "none", borderRadius: "6px", padding: "5px 10px",
+                        fontSize: "11px", fontWeight: "700", cursor: "pointer",
+                        textTransform: "capitalize", transition: "all 0.2s",
+                        backgroundColor: active ? getStatusColor(statusOption) : "transparent",
+                        color: active ? "#ffffff" : "#475569",
+                        boxShadow: active ? "0 2px 6px rgba(0,0,0,0.06)" : "none"
+                      }}
+                      title={statusOption.charAt(0).toUpperCase() + statusOption.slice(1)}
+                    >
+                      {statusOption.charAt(0).toUpperCase()}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Profile Photo */}
               {userProfile.profilePhoto ? (
                 userProfile.profilePhoto.length <= 4 ? (
-                  <span>{userProfile.profilePhoto}</span>
+                  <span style={{ fontSize: "24px" }}>{userProfile.profilePhoto}</span>
                 ) : (
-                  <img src={userProfile.profilePhoto} alt="Profile" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                  <img src={userProfile.profilePhoto} alt="Nav" style={{ height: "36px", width: "36px", borderRadius: "50%", objectFit: "cover", border: "2px solid #ddd" }} />
                 )
               ) : (
-                <span style={{ color: "#e63946", fontWeight: "800", fontSize: "18px" }}>
+                <div style={{ height: "36px", width: "36px", backgroundColor: "#e63946", color: "white", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "16px", fontWeight: "bold", border: "2px solid #eee" }}>
                   {(userProfile.name || "").charAt(0).toUpperCase()}
-                </span>
+                </div>
               )}
-            </div>
 
-            <div style={{ flex: 1, overflow: "hidden" }}>
-              <div style={{ fontWeight: "700", color: "#0f172a", fontSize: "14px", textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap" }}>
-                {userProfile.name}
-              </div>
-              <div style={{ display: "flex", gap: "6px", alignItems: "center", marginTop: "3px" }}>
-                <span style={{ fontSize: "11px", fontWeight: "800", color: "#e63946", backgroundColor: "#fff5f5", padding: "1px 6px", borderRadius: "6px", border: "1px solid #fed7aa" }}>
-                  {userProfile.bloodGroup || "Bg?"}
-                </span>
-                <span style={{ fontSize: "11px", color: "#64748b", fontWeight: "500" }}>Donor</span>
-              </div>
-            </div>
-          </div>
-
-          <div style={{ borderTop: "1px solid #e2e8f0", paddingTop: "12px" }}>
-            <label style={{ fontSize: "10px", fontWeight: "800", color: "#64748b", textTransform: "uppercase", letterSpacing: "0.5px", display: "block", marginBottom: "8px" }}>
-              Availability Status
-            </label>
-            <div style={{ display: "flex", borderRadius: "10px", background: "#cbd5e144", padding: "3px", gap: "2px" }}>
-              {["available", "busy", "offline"].map((statusOption) => {
-                const active = availability === statusOption;
-                return (
-                  <button
-                    key={statusOption}
-                    onClick={() => updateAvailabilityState(statusOption)}
-                    style={{
-                      flex: 1, border: "none", borderRadius: "8px", padding: "6px 2px",
-                      fontSize: "10px", fontWeight: "700", cursor: "pointer",
-                      textTransform: "capitalize", transition: "all 0.2s",
-                      backgroundColor: active ? getStatusColor(statusOption) : "transparent",
-                      color: active ? "#ffffff" : "#475569",
-                      boxShadow: active ? "0 2px 6px rgba(0,0,0,0.06)" : "none"
-                    }}
-                  >
-                    {statusOption}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-
-        {/* NAVIGATION ITEMS */}
-        <nav style={{ display: "flex", flexDirection: "column", gap: "6px", flex: 1 }}>
-          {[
-            { id: "requests", label: "Emergency Feed", icon: "📢", path: "/donorDashboard" },
-            { id: "messages", label: "Messages", icon: "💬", path: "/donorDashboard?tab=messages" },
-            { id: "profile", label: "Donation History", icon: "⏳", path: "/history" },
-            { id: "settings", label: "Profile Settings", icon: "⚙️", path: "/profile" },
-            { id: "reports", label: "My Reports", icon: "🚨", path: "/donorDashboard?tab=reports" },
-          ].map((item) => {
-            const active = item.id === "profile";
-            return (
+              {/* Logout Button */}
               <button
-                key={item.id}
-                onClick={() => router.push(item.path)}
-                style={{
-                  display: "flex", alignItems: "center", gap: "12px", width: "100%",
-                  border: "none", borderRadius: "12px", padding: "12px 14px",
-                  cursor: "pointer", transition: "all 0.2s", textAlign: "left",
-                  backgroundColor: active ? "rgba(230,57,70,0.06)" : "transparent",
-                  color: active ? "#e63946" : "#475569",
-                  fontWeight: active ? "700" : "600",
-                  fontSize: "14px"
-                }}
+                onClick={handleLogout}
+                style={{ backgroundColor: "#ef4444", color: "white", border: "none", padding: "8px 15px", borderRadius: "6px", cursor: "pointer", fontWeight: "bold", boxShadow: "0 2px 4px rgba(0,0,0,0.1)" }}
               >
-                <span style={{ fontSize: "16px" }}>{item.icon}</span>
-                <span>{item.label}</span>
+                Logout
               </button>
-            );
-          })}
-        </nav>
-
-        {/* LOGOUT */}
-        <button
-          onClick={handleLogout}
-          style={{
-            display: "flex", alignItems: "center", gap: "12px", width: "100%",
-            border: "1px solid #fee2e2", borderRadius: "12px", padding: "12px 14px",
-            cursor: "pointer", transition: "all 0.2s", textAlign: "left",
-            backgroundColor: "#fff5f5", color: "#ef4444", fontWeight: "700", fontSize: "14px",
-            marginTop: "auto"
-          }}
-        >
-          <span>🚪</span>
-          <span>Logout</span>
-        </button>
-      </aside>
+            </div>
+          )}
+        </div>
+      </nav>
 
       {/* MAIN CONTAINER */}
-      <main style={{ flex: 1, padding: "40px", boxSizing: "border-box", overflowY: "auto", height: "100vh" }}>
-        
+      <main style={{ maxWidth: "1200px", margin: "30px auto", padding: "0 20px", boxSizing: "border-box" }}>
         <header style={{ marginBottom: "36px" }}>
           <h1 style={{ margin: 0, fontSize: "28px", fontWeight: "800", color: "#0f172a", letterSpacing: "-0.8px" }}>
             Hero's Log & Donation History
