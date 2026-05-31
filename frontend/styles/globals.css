@@ -1,0 +1,21 @@
+@import "tailwindcss";
+
+@theme {
+  --color-brand-red: #e63946;
+  --color-brand-offwhite: #f1faee;
+  --color-brand-lightblue: #a8dadc;
+  --color-brand-blue: #457b9d;
+  --color-brand-darkblue: #1d3557;
+}
+
+:root {
+  --foreground-rgb: 0, 0, 0;
+  --background-start-rgb: 214, 219, 220;
+  --background-end-rgb: 255, 255, 255;
+}
+
+@layer base {
+  body {
+    @apply bg-zinc-50 text-zinc-900 antialiased;
+  }
+}
