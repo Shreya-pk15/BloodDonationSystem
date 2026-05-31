@@ -374,6 +374,7 @@ export default function LiveChat({ socket, theme = "donor", initialRecipient, on
   const [partnerLive, setPartnerLive] = useState(null);
   const [sharingLive, setSharingLive] = useState(false);
   const [locationBusy, setLocationBusy] = useState(false);
+  const [hasLoadedConversations, setHasLoadedConversations] = useState(false);
   const bottomRef = useRef(null);
   const watchIdRef = useRef(null);
   const myIdRef = useRef(null);
@@ -392,8 +393,10 @@ export default function LiveChat({ socket, theme = "donor", initialRecipient, on
   const totalUnread = conversations.reduce((sum, c) => sum + (c.unreadCount || 0), 0);
 
   useEffect(() => {
-    onUnreadChange?.(totalUnread);
-  }, [totalUnread, onUnreadChange]);
+    if (hasLoadedConversations) {
+      onUnreadChange?.(totalUnread);
+    }
+  }, [totalUnread, onUnreadChange, hasLoadedConversations]);
 
   const fetchConversations = useCallback(async () => {
     try {
@@ -661,7 +664,10 @@ export default function LiveChat({ socket, theme = "donor", initialRecipient, on
         /* presence API optional fallback */
       }
       await fetchConversations();
-      if (!cancelled) setLoading(false);
+      if (!cancelled) {
+        setHasLoadedConversations(true);
+        setLoading(false);
+      }
     })();
     return () => {
       cancelled = true;

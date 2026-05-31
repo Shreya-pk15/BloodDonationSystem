@@ -611,7 +611,7 @@ export default function DonorDashboard() {
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "20px", position: "relative" }}>
                   {/* Left: greeting */}
                   <div>
-                    <p style={{ margin: "0 0 4px 0", fontSize: "11px", fontWeight: "700", color: "#94a3b8", textTransform: "uppercase", letterSpacing: "1px" }}>Donor Summary</p>
+
                     <h2 style={{ margin: "0 0 18px 0", fontSize: "22px", fontWeight: "900", color: "#f1f5f9", letterSpacing: "-0.5px" }}>
                       Welcome back, {userProfile?.name?.split(" ")[0]} 👋
                     </h2>
@@ -675,27 +675,6 @@ export default function DonorDashboard() {
               display: "flex", justifyContent: "space-between", alignItems: "center",
               marginBottom: "24px", flexWrap: "wrap", gap: "12px"
             }}>
-              <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-                <span style={{ fontSize: "12px", fontWeight: "800", color: "#64748b", textTransform: "uppercase" }}>
-                  Proximity:
-                </span>
-                {["all", "5km", "15km", "city"].map((opt) => (
-                  <button
-                    key={opt}
-                    onClick={() => setProximityFilter(opt)}
-                    style={{
-                      border: "1px solid #cbd5e1", borderRadius: "8px",
-                      padding: "6px 14px", fontSize: "12px", fontWeight: "700",
-                      cursor: "pointer", textTransform: "capitalize", transition: "all 0.2s",
-                      backgroundColor: proximityFilter === opt ? "#0f172a" : "#ffffff",
-                      color: proximityFilter === opt ? "#ffffff" : "#475569"
-                    }}
-                  >
-                    {opt === "all" ? "Show All" : opt}
-                  </button>
-                ))}
-              </div>
-
               <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
                 <span style={{ fontSize: "12px", fontWeight: "800", color: "#64748b", textTransform: "uppercase" }}>
                   Urgency:
