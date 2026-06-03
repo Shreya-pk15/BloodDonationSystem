@@ -12,6 +12,7 @@ const { Server } = require("socket.io");
 
 const setupSocket = require("./socket");
 const startBroadcastCron = require("./cron/broadcastCron");
+const startWeeklyAnalyticsCron = require("./cron/weeklyAnalyticsCron");
 
 // ROUTES
 const authRoutes = require("./routes/authRoutes");
@@ -69,6 +70,7 @@ mongoose
 
     // Start cron broadcast system after DB is ready
     startBroadcastCron(io);
+    startWeeklyAnalyticsCron(io);
 
     const PORT = process.env.PORT || 5000;
     server.listen(PORT, () => {

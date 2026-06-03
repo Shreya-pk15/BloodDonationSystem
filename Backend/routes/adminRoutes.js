@@ -8,6 +8,9 @@ const {
   getAllUsers,
   toggleBlockUser,
   toggleVerifyHospital,
+  getPendingHospitals,
+  approveHospital,
+  rejectHospital,
   getAllRequests,
   forceDeleteRequest,
   getReports,
@@ -22,6 +25,9 @@ router.get("/analytics", getAnalytics);
 
 // Users & Hospitals
 router.get("/users", getAllUsers);
+router.get("/hospitals/pending", getPendingHospitals);
+router.put("/hospitals/:id/approve", approveHospital);
+router.delete("/hospitals/:id/reject", rejectHospital);
 router.put("/users/:id/block", toggleBlockUser);
 router.put("/users/:id/verify", toggleVerifyHospital);
 

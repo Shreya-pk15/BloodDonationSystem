@@ -15,6 +15,7 @@ const {
   emitHospitalRequestEvent,
   emitDonorRequestEvent,
 } = require("../services/requestService");
+const { sendDonationCompletedEmail } = require("../services/emailService");
 
 const ALLOWED_BROADCAST_HOURS = [1, 2, 4, 6, 12, 24];
 
@@ -299,6 +300,22 @@ const completeRequest = async (req, res) => {
     await request.save();
 
     await applyDonationCompletion(request);
+
+    // Send donation completion emails to donors
+    try {
+      const donors = await User.find({ _id: { $in: request.acceptedDonors } });
+      const hospital = await User.findById(request.hospitalId).select("name");
+      const requestForEmail = { _id: request._id, hospitalId: hospital ? hospital.name : request.hospitalId };
+      for (const donor of donors) {
+        try {
+          await sendDonationCompletedEmail(donor, requestForEmail);
+        } catch (emailErr) {
+          console.error("Donation completion email failed for donor", donor._id, emailErr.message);
+        }
+      }
+    } catch (err) {
+      console.error("Failed to send donation completion emails:", err.message);
+    }
 
     const io = req.app.get("io");
     emitDonorRequestEvent(io, request.acceptedDonors, "donation-completed", {

@@ -701,7 +701,11 @@ export default function LiveChat({ socket, theme = "donor", initialRecipient, on
 
   useEffect(() => {
     const id = initialRecipient?._id;
-    if (!id || lastOpenedRef.current === id) return;
+    if (!id) {
+      lastOpenedRef.current = null;
+      return;
+    }
+    if (lastOpenedRef.current === id) return;
     lastOpenedRef.current = id;
     startChatWith(initialRecipient);
   }, [initialRecipient, startChatWith]);

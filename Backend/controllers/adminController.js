@@ -1,6 +1,12 @@
 const User = require("../models/User");
 const Request = require("../models/Request");
 const Report = require("../models/Report");
+const {
+  sendVerificationEmail,
+  sendRejectionEmail,
+  sendAccountBlockedEmail,
+  sendAccountUnblockedEmail,
+} = require("../services/emailService");
 
 const getAnalytics = async (req, res) => {
   try {
@@ -55,6 +61,12 @@ const toggleBlockUser = async (req, res) => {
     user.isBlocked = !user.isBlocked;
     // Reset verify if blocked? No, let them be independent.
     await user.save();
+    try {
+      if (user.isBlocked) await sendAccountBlockedEmail(user);
+      else await sendAccountUnblockedEmail(user);
+    } catch (emailErr) {
+      console.error("Block/unblock email failed:", emailErr.message);
+    }
     res.status(200).json({ message: `User ${user.isBlocked ? "blocked" : "unblocked"} successfully`, user });
   } catch (err) { res.status(500).json({ error: err.message }); }
 };
@@ -66,10 +78,71 @@ const toggleVerifyHospital = async (req, res) => {
 
     user.isVerified = !user.isVerified;
     await user.save();
+
+    if (user.isVerified) {
+      try {
+        await sendVerificationEmail(user);
+      } catch (emailErr) {
+        console.error("Verification email failed:", emailErr.message);
+      }
+    }
+
     res.status(200).json({ message: `Hospital ${user.isVerified ? "verified" : "unverified"} successfully`, user });
   } catch (err) { res.status(500).json({ error: err.message }); }
 };
 
+const getPendingHospitals = async (req, res) => {
+  try {
+    const hospitals = await User.find({ role: "hospital", isVerified: false }).select("-password").sort({ createdAt: -1 });
+    res.status(200).json(hospitals);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+const approveHospital = async (req, res) => {
+  try {
+    const hospital = await User.findById(req.params.id);
+    if (!hospital || hospital.role !== "hospital") {
+      return res.status(404).json({ message: "Hospital not found" });
+    }
+
+    if (hospital.isVerified) {
+      return res.status(400).json({ message: "Hospital is already approved" });
+    }
+
+    hospital.isVerified = true;
+    await hospital.save();
+    try {
+      await sendVerificationEmail(hospital);
+    } catch (emailErr) {
+      console.error("Verification email failed:", emailErr.message);
+    }
+    res.status(200).json({ message: "Hospital approved successfully", hospital });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+const rejectHospital = async (req, res) => {
+  try {
+    const hospital = await User.findOne({ _id: req.params.id, role: "hospital", isVerified: false });
+    if (!hospital) {
+      return res.status(404).json({ message: "Pending hospital not found or already reviewed" });
+    }
+
+    try {
+      await sendRejectionEmail(hospital);
+    } catch (emailErr) {
+      console.error("Rejection email failed:", emailErr.message);
+    }
+
+    await hospital.deleteOne();
+    res.status(200).json({ message: "Hospital registration rejected and removed successfully" });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
 
 // Requests
 const getAllRequests = async (req, res) => {
@@ -152,6 +225,9 @@ module.exports = {
   getAllUsers,
   toggleBlockUser,
   toggleVerifyHospital,
+  getPendingHospitals,
+  approveHospital,
+  rejectHospital,
   getAllRequests,
   forceDeleteRequest,
   getReports,

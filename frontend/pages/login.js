@@ -6,7 +6,7 @@ export default function Login() {
   const router = useRouter();
 
   const [form, setForm] = useState({
-    email: "",
+    emailOrUsername: "",
     password: "",
   });
 
@@ -76,12 +76,12 @@ export default function Login() {
 
         <form onSubmit={handleLogin} className="login-form">
           <div className="input-group">
-            <label>Email Address</label>
+            <label>Email or Username</label>
             <input
-              type="email"
-              name="email"
-              placeholder="you@example.com"
-              value={form.email}
+              type="text"
+              name="emailOrUsername"
+              placeholder="you@example.com or your-username"
+              value={form.emailOrUsername}
               onChange={handleChange}
               required
             />
@@ -106,6 +106,14 @@ export default function Login() {
               >
                 {showPassword ? "👁️" : "👁️‍🗨️"}
               </button>
+            </div>
+            <div className="forgot-link-wrapper">
+              <span
+                className="forgot-link"
+                onClick={() => router.push("/forgot-password")}
+              >
+                Forgot Password?
+              </span>
             </div>
           </div>
 
@@ -253,6 +261,25 @@ export default function Login() {
 
         .password-toggle:hover {
           color: #0f172a;
+        }
+
+        .forgot-link-wrapper {
+          display: flex;
+          justify-content: flex-end;
+          margin-top: 8px;
+        }
+
+        .forgot-link {
+          font-size: 13px;
+          font-weight: 600;
+          color: #e11d48;
+          cursor: pointer;
+          transition: color 0.2s, text-decoration 0.2s;
+        }
+
+        .forgot-link:hover {
+          color: #be123c;
+          text-decoration: underline;
         }
 
         .login-btn {

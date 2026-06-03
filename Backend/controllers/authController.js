@@ -1,15 +1,22 @@
+const crypto = require("crypto");
 const User = require("../models/User");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const { getJwtSecret } = require("../utils/jwtSecret");
+const {
+  sendWelcomeEmail,
+  sendPasswordResetEmail,
+} = require("../services/emailService");
+
+const escapeRegex = (text) => text.replace(/[.*+?^${}()|[\\]\\]/g, "\\$&");
 
 // Register
 const registerUser = async (req, res) => {
   try {
-    const { name, email, phone, password, role, bloodGroup, city, lat, lng } =
+    const { name, username, email, phone, password, role, bloodGroup, city, lat, lng } =
       req.body;
 
-    if (!name || !email || !phone || !password || !role) {
+    if (!name || !username || !email || !phone || !password || !role) {
       return res.status(400).json({ message: "All fields required" });
     }
 
@@ -23,16 +30,25 @@ const registerUser = async (req, res) => {
         .json({ message: "Blood group required for donors" });
     }
 
-    const existing = await User.findOne({ email });
-    if (existing) {
-      return res.status(400).json({ message: "User already exists" });
+    const normalizedEmail = email.toLowerCase().trim();
+    const normalizedUsername = username.toLowerCase().trim();
+
+    const existingEmail = await User.findOne({ email: normalizedEmail });
+    if (existingEmail) {
+      return res.status(400).json({ message: "Email already in use" });
+    }
+
+    const existingUsername = await User.findOne({ username: normalizedUsername });
+    if (existingUsername) {
+      return res.status(400).json({ message: "Username already taken" });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const user = new User({
       name,
-      email,
+      username: normalizedUsername,
+      email: normalizedEmail,
       phone,
       password: hashedPassword,
       role,
@@ -46,7 +62,63 @@ const registerUser = async (req, res) => {
 
     await user.save();
 
+    try {
+      await sendWelcomeEmail(user);
+    } catch (emailErr) {
+      console.error("Welcome email failed:", emailErr.message);
+    }
+
     res.status(201).json({ message: "Registered Successfully" });
+  } catch (err) {
+    res.status(500).json({ message: "Server Error", error: err.message });
+  }
+};
+
+// Forgot password
+const forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ message: "Email required" });
+
+    const normalizedEmail = email.toLowerCase().trim();
+    const user = await User.findOne({ email: normalizedEmail });
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    const token = crypto.randomBytes(32).toString("hex");
+    user.passwordResetToken = token;
+    user.passwordResetExpires = Date.now() + 1000 * 60 * 60; // 1 hour
+    await user.save();
+
+    await sendPasswordResetEmail(user, token);
+    res.status(200).json({ message: "Password reset link sent to your registered email address." });
+  } catch (err) {
+    res.status(500).json({ message: "Server Error", error: err.message });
+  }
+};
+
+// Reset password
+const resetPassword = async (req, res) => {
+  try {
+    const { token, password } = req.body;
+    if (!token || !password) {
+      return res.status(400).json({ message: "Token and new password are required" });
+    }
+
+    const user = await User.findOne({
+      passwordResetToken: token,
+      passwordResetExpires: { $gt: Date.now() },
+    });
+
+    if (!user) {
+      return res.status(400).json({ message: "Reset token is invalid or has expired." });
+    }
+
+    user.password = await bcrypt.hash(password, 10);
+    user.passwordResetToken = undefined;
+    user.passwordResetExpires = undefined;
+    await user.save();
+
+    res.status(200).json({ message: "Password has been reset successfully" });
   } catch (err) {
     res.status(500).json({ message: "Server Error", error: err.message });
   }
@@ -55,10 +127,12 @@ const registerUser = async (req, res) => {
 // Login
 const loginUser = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { emailOrUsername, password } = req.body;
+
+    const loginInput = (emailOrUsername || "").toString().trim().toLowerCase();
 
     // Hardcoded Admin Login
-    if (email === "admin@admin.com" && password === "admin123") {
+    if (loginInput === "admin@admin.com" && password === "admin123") {
       const token = jwt.sign(
         { userId: "admin123", role: "admin" },
         getJwtSecret(),
@@ -77,7 +151,10 @@ const loginUser = async (req, res) => {
       });
     }
 
-    const user = await User.findOne({ email });
+    const searchPattern = new RegExp(`^${escapeRegex(loginInput)}$`, "i");
+    const user = await User.findOne({
+      $or: [{ email: searchPattern }, { username: searchPattern }],
+    });
     if (!user) return res.status(400).json({ message: "Invalid credentials" });
 
     const match = await bcrypt.compare(password, user.password);
@@ -114,4 +191,9 @@ const loginUser = async (req, res) => {
   }
 };
 
-module.exports = { registerUser, loginUser };
+module.exports = {
+  registerUser,
+  loginUser,
+  forgotPassword,
+  resetPassword,
+};

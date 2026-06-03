@@ -2,187 +2,102 @@ import axios from "axios";
 import { useRouter } from "next/router";
 import { useState } from "react";
 
-export default function Login() {
+export default function ForgotPassword() {
     const router = useRouter();
 
-    const [form, setForm] = useState({
-        email: "",
-        password: "",
-    });
-
+    const [email, setEmail] = useState("");
     const [loading, setLoading] = useState(false);
-    const [errorMsg, setErrorMsg] = useState("");
-    const [showPassword, setShowPassword] = useState(false);
+    const [message, setMessage] = useState("");
+    const [error, setError] = useState("");
+    const [submitted, setSubmitted] = useState(false);
 
-    // Forgot password states
-    const [showForgotModal, setShowForgotModal] = useState(false);
-    const [forgotEmail, setForgotEmail] = useState("");
-    const [forgotMsg, setForgotMsg] = useState("");
-    const [forgotLoading, setForgotLoading] = useState(false);
-
-    const handleChange = (e) => {
-        setForm({ ...form, [e.target.name]: e.target.value });
-        setErrorMsg("");
-    };
-
-    const handleLogin = async (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
-        setErrorMsg("");
+        setError("");
+        setMessage("");
 
-        try {
-            const res = await axios.post("http://localhost:5000/api/auth/login", form);
-
-            localStorage.setItem("token", res.data.token);
-            localStorage.setItem("role", res.data.user.role);
-
-            if (res.data.user.role === "donor") {
-                router.push("/donorDashboard");
-            } else if (res.data.user.role === "hospital") {
-                router.push("/hospitalDashboard");
-            } else {
-                router.push("/adminDashboard");
-            }
-        } catch (err) {
-            setErrorMsg(err.response?.data?.message || "Login Failed");
+        if (!email.trim()) {
+            setError("Please enter your email address");
             setLoading(false);
+            return;
         }
-    };
-
-    // Forgot password submit
-    const handleForgotPassword = async (e) => {
-        e.preventDefault();
-        setForgotLoading(true);
-        setForgotMsg("");
 
         try {
             const res = await axios.post(
                 "http://localhost:5000/api/auth/forgot-password",
-                { email: forgotEmail }
+                { email }
             );
 
-            setForgotMsg(res.data.message || "Reset link sent to your email!");
+            setMessage(
+                res.data.message ||
+                    "Password reset link sent to your registered email address. Please check your inbox."
+            );
+            setSubmitted(true);
+            setTimeout(() => {
+                router.push("/login");
+            }, 3000);
         } catch (err) {
-            setForgotMsg(err.response?.data?.message || "Failed to send reset link");
+            setError(
+                err.response?.data?.message ||
+                    "This email is not registered. Please use the email you signed up with."
+            );
         } finally {
-            setForgotLoading(false);
+            setLoading(false);
         }
     };
 
     return (
-        <div className="login-container">
+        <div className="forgot-container">
             <link
                 href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
                 rel="stylesheet"
             />
 
-            <div className="login-card">
-                <div className="login-header">
+            <div className="forgot-card">
+                <div className="forgot-header">
                     <div className="logo-icon">🩸</div>
-                    <h1>Welcome Back</h1>
-                    <p>Sign in to continue saving lives</p>
+                    <h1>Forgot Password</h1>
+                    <p>Enter your email to receive a password reset link</p>
                 </div>
 
-                {errorMsg && <div className="error-banner">{errorMsg}</div>}
+                {message && <div className="success-banner">{message}</div>}
+                {error && <div className="error-banner">{error}</div>}
 
-                <form onSubmit={handleLogin} className="login-form">
-                    <div className="input-group">
-                        <label>Email Address</label>
-                        <input
-                            type="email"
-                            name="email"
-                            placeholder="you@example.com"
-                            value={form.email}
-                            onChange={handleChange}
-                            required
-                        />
-                    </div>
-
-                    <div className="input-group">
-                        <label>Password</label>
-
-                        <div className="password-wrapper">
+                {!submitted ? (
+                    <form onSubmit={handleSubmit} className="forgot-form">
+                        <div className="input-group">
+                            <label>Email Address</label>
                             <input
-                                type={showPassword ? "text" : "password"}
-                                name="password"
-                                placeholder="••••••••"
-                                value={form.password}
-                                onChange={handleChange}
+                                type="email"
+                                placeholder="you@example.com"
+                                value={email}
+                                onChange={(e) => {
+                                    setEmail(e.target.value);
+                                    setError("");
+                                }}
                                 required
                             />
-                            <button
-                                type="button"
-                                className="password-toggle"
-                                onClick={() => setShowPassword(!showPassword)}
-                                aria-label={showPassword ? "Hide password" : "Show password"}
-                            >
-                                {showPassword ? "👁️" : "👁️‍🗨️"}
-                            </button>
                         </div>
 
-                        {/* Forgot Password Link */}
-                        <div className="forgot-link-wrapper">
-                            <span
-                                className="forgot-link"
-                                onClick={() => {
-                                    setShowForgotModal(true);
-                                    setForgotMsg("");
-                                    setForgotEmail("");
-                                }}
-                            >
-                                Forgot Password?
-                            </span>
-                        </div>
-                    </div>
+                        <button type="submit" className="forgot-btn" disabled={loading}>
+                            {loading ? <span className="spinner"></span> : "Send Reset Link"}
+                        </button>
+                    </form>
+                ) : null}
 
-                    <button type="submit" className="login-btn" disabled={loading}>
-                        {loading ? <span className="spinner"></span> : "Sign In"}
-                    </button>
-                </form>
-
-                <div className="login-footer">
-                    Don't have an account?{" "}
+                <div className="forgot-footer">
+                    Remember your password?{" "}
                     <span
-                        className="register-link"
-                        onClick={() => router.push("/register")}
+                        className="login-link"
+                        onClick={() => router.push("/login")}
                     >
-                        Create one
+                        Sign in
                     </span>
                 </div>
             </div>
 
-            {/* Forgot Password Modal */}
-            {showForgotModal && (
-                <div className="modal-overlay">
-                    <div className="modal-box">
-                        <h2>Reset Password</h2>
-                        <p>Enter your registered email to get a reset link.</p>
 
-                        <form onSubmit={handleForgotPassword} className="modal-form">
-                            <input
-                                type="email"
-                                placeholder="Enter email"
-                                value={forgotEmail}
-                                onChange={(e) => setForgotEmail(e.target.value)}
-                                required
-                            />
-
-                            <button type="submit" disabled={forgotLoading}>
-                                {forgotLoading ? "Sending..." : "Send Reset Link"}
-                            </button>
-                        </form>
-
-                        {forgotMsg && <div className="modal-msg">{forgotMsg}</div>}
-
-                        <button
-                            className="close-btn"
-                            onClick={() => setShowForgotModal(false)}
-                        >
-                            Close
-                        </button>
-                    </div>
-                </div>
-            )}
 
             <style jsx global>{`
         * {
@@ -198,8 +113,8 @@ export default function Login() {
         }
       `}</style>
 
-            <style>{`
-        .login-container {
+            <style jsx>{`
+        .forgot-container {
           display: flex;
           align-items: center;
           justify-content: center;
@@ -208,7 +123,7 @@ export default function Login() {
           padding: 20px;
         }
 
-        .login-card {
+        .forgot-card {
           background: #ffffff;
           max-width: 420px;
           width: 100%;
@@ -218,7 +133,7 @@ export default function Login() {
           animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
-        .login-header {
+        .forgot-header {
           text-align: center;
           margin-bottom: 30px;
         }
@@ -230,7 +145,7 @@ export default function Login() {
           animation: pulse 2.5s ease-in-out infinite;
         }
 
-        .login-header h1 {
+        .forgot-header h1 {
           margin: 0;
           color: #0f172a;
           font-size: 30px;
@@ -238,7 +153,7 @@ export default function Login() {
           letter-spacing: -1px;
         }
 
-        .login-header p {
+        .forgot-header p {
           color: #64748b;
           margin: 6px 0 0 0;
           font-size: 15px;
@@ -258,7 +173,20 @@ export default function Login() {
           animation: shake 0.4s ease-in-out;
         }
 
-        .login-form {
+        .success-banner {
+          background: #f0fdf4;
+          color: #16a34a;
+          padding: 14px;
+          border-radius: 12px;
+          font-size: 14px;
+          font-weight: 600;
+          text-align: center;
+          margin-bottom: 24px;
+          border: 1px solid #86efac;
+          animation: slideUp 0.4s ease-in-out;
+        }
+
+        .forgot-form {
           display: flex;
           flex-direction: column;
           gap: 20px;
@@ -296,43 +224,7 @@ export default function Login() {
           box-shadow: 0 4px 16px rgba(239, 68, 68, 0.1);
         }
 
-        .password-wrapper {
-          position: relative;
-          display: flex;
-          align-items: center;
-        }
-
-        .password-toggle {
-          position: absolute;
-          right: 14px;
-          background: none;
-          border: none;
-          cursor: pointer;
-          font-size: 18px;
-          padding: 4px;
-          color: #64748b;
-        }
-
-        .forgot-link-wrapper {
-          display: flex;
-          justify-content: flex-end;
-          margin-top: 6px;
-        }
-
-        .forgot-link {
-          font-size: 13px;
-          font-weight: 700;
-          color: #e11d48;
-          cursor: pointer;
-          transition: 0.2s;
-        }
-
-        .forgot-link:hover {
-          color: #be123c;
-          text-decoration: underline;
-        }
-
-        .login-btn {
+        .forgot-btn {
           margin-top: 10px;
           width: 100%;
           padding: 16px;
@@ -350,12 +242,26 @@ export default function Login() {
           box-shadow: 0 8px 20px rgba(225, 29, 72, 0.25);
         }
 
-        .login-btn:disabled {
+        .forgot-btn:hover:not(:disabled) {
+          opacity: 0.9;
+          box-shadow: 0 12px 24px rgba(225, 29, 72, 0.35);
+        }
+
+        .forgot-btn:disabled {
           opacity: 0.7;
           cursor: not-allowed;
         }
 
-        .login-footer {
+        .spinner {
+          width: 20px;
+          height: 20px;
+          border: 3px solid rgba(255, 255, 255, 0.3);
+          border-radius: 50%;
+          border-top-color: white;
+          animation: spin 0.8s linear infinite;
+        }
+
+        .forgot-footer {
           margin-top: 32px;
           text-align: center;
           color: #64748b;
@@ -363,107 +269,16 @@ export default function Login() {
           font-weight: 500;
         }
 
-        .register-link {
+        .login-link {
           color: #e11d48;
           font-weight: 700;
           cursor: pointer;
           margin-left: 4px;
+          transition: 0.2s;
         }
 
-        .register-link:hover {
+        .login-link:hover {
           text-decoration: underline;
-        }
-
-        .spinner {
-          width: 22px;
-          height: 22px;
-          border: 3px solid rgba(255, 255, 255, 0.3);
-          border-radius: 50%;
-          border-top-color: white;
-          animation: spin 0.8s linear infinite;
-        }
-
-        /* MODAL */
-        .modal-overlay {
-          position: fixed;
-          inset: 0;
-          background: rgba(0, 0, 0, 0.45);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          z-index: 999;
-          padding: 20px;
-        }
-
-        .modal-box {
-          width: 100%;
-          max-width: 420px;
-          background: white;
-          padding: 30px;
-          border-radius: 18px;
-          box-shadow: 0 30px 70px rgba(0, 0, 0, 0.2);
-          animation: slideUp 0.3s ease;
-          text-align: center;
-        }
-
-        .modal-box h2 {
-          margin: 0;
-          font-size: 22px;
-          font-weight: 800;
-          color: #0f172a;
-        }
-
-        .modal-box p {
-          margin-top: 8px;
-          color: #64748b;
-          font-size: 14px;
-          font-weight: 500;
-        }
-
-        .modal-form {
-          margin-top: 18px;
-          display: flex;
-          flex-direction: column;
-          gap: 12px;
-        }
-
-        .modal-form input {
-          padding: 14px;
-          border-radius: 12px;
-          border: 2px solid #e2e8f0;
-          font-size: 14px;
-          outline: none;
-        }
-
-        .modal-form button {
-          padding: 14px;
-          border: none;
-          border-radius: 12px;
-          background: #e11d48;
-          color: white;
-          font-weight: 700;
-          cursor: pointer;
-        }
-
-        .modal-form button:disabled {
-          opacity: 0.7;
-          cursor: not-allowed;
-        }
-
-        .modal-msg {
-          margin-top: 12px;
-          font-size: 13px;
-          font-weight: 700;
-          color: #16a34a;
-        }
-
-        .close-btn {
-          margin-top: 18px;
-          background: none;
-          border: none;
-          font-weight: 700;
-          cursor: pointer;
-          color: #0f172a;
         }
 
         @keyframes spin {
@@ -508,6 +323,20 @@ export default function Login() {
           }
           75% {
             transform: translateX(-5px);
+          }
+        }
+
+        @media (max-width: 480px) {
+          .forgot-card {
+            padding: 30px 20px;
+          }
+
+          .forgot-header h1 {
+            font-size: 24px;
+          }
+
+          .logo-icon {
+            font-size: 40px;
           }
         }
       `}</style>

@@ -160,10 +160,67 @@ export default function ProfilePage() {
   }
 
   return (
-    <div style={{ minHeight: "100vh", backgroundColor: "#f8fafc", fontFamily: "'Inter', system-ui, sans-serif", display: "flex", color: "#334155" }}>
+    <div style={{ minHeight: "100vh", backgroundColor: "#f8fafc", fontFamily: "'Inter', system-ui, sans-serif", display: "flex", flexDirection: "column", color: "#334155" }}>
       <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
 
-      {/* SIDEBAR */}
+      {/* TOP NAVBAR */}
+      <nav style={{
+        backgroundColor: "#ffffff",
+        padding: "18px 28px",
+        boxShadow: "0 2px 10px rgba(0,0,0,0.08)",
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        width: "100%",
+        position: "sticky",
+        top: 0,
+        zIndex: 200,
+      }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+          <h2 style={{ margin: 0, color: "#1d3557", display: "flex", alignItems: "center", gap: "10px", fontSize: "20px", fontWeight: 800 }}>
+            👤 Profile
+          </h2>
+          <span style={{ color: "#64748b", fontSize: "13px", fontWeight: 600 }}>
+            Hospital profile settings and availability
+          </span>
+        </div>
+
+        <div style={{ display: "flex", alignItems: "center", gap: "18px" }}>
+          <button
+            type="button"
+            onClick={() => router.push("/hospitalDashboard")}
+            style={{
+              background: "transparent",
+              border: "none",
+              color: "#334155",
+              fontWeight: 700,
+              cursor: "pointer",
+              fontSize: "14px",
+            }}
+          >
+            Hospital Dashboard
+          </button>
+          <button
+            type="button"
+            onClick={handleLogout}
+            style={{
+              backgroundColor: "#ef4444",
+              color: "#ffffff",
+              border: "none",
+              borderRadius: "10px",
+              padding: "10px 18px",
+              cursor: "pointer",
+              fontWeight: 700,
+              fontSize: "14px",
+            }}
+          >
+            Logout
+          </button>
+        </div>
+      </nav>
+
+      <div style={{ display: "flex", flex: 1, minHeight: 0 }}>
+        {/* SIDEBAR */}
       <aside style={{
         width: "280px", backgroundColor: "#ffffff", borderRight: "1px solid #e2e8f0",
         display: "flex", flexDirection: "column", padding: "28px 20px", flexShrink: 0,
@@ -294,6 +351,24 @@ export default function ProfilePage() {
 
       {/* MAIN CONTENT CONTAINER */}
       <main style={{ flex: 1, padding: "40px", boxSizing: "border-box", overflowY: "auto", height: "100vh" }}>
+
+        <div style={{ backgroundColor: "#ffffff", borderRadius: "18px", padding: "18px 22px", display: "flex", flexWrap: "wrap", gap: "22px", alignItems: "center", boxShadow: "0 4px 22px rgba(15, 23, 43, 0.06)", marginBottom: "28px" }}>
+          <span onClick={() => router.push("/donorDashboard")} style={{ cursor: "pointer", fontSize: "14px", fontWeight: "600", color: "#475569", paddingBottom: "5px" }}>
+            Emergency Feed
+          </span>
+          <span onClick={() => router.push("/donorDashboard?tab=messages")} style={{ cursor: "pointer", fontSize: "14px", fontWeight: "600", color: "#475569", paddingBottom: "5px" }}>
+            💬 Messages
+          </span>
+          <span onClick={() => router.push("/history")} style={{ cursor: "pointer", fontSize: "14px", fontWeight: "600", color: "#475569", paddingBottom: "5px" }}>
+            Donation History
+          </span>
+          <span style={{ cursor: "pointer", fontSize: "14px", fontWeight: "700", color: "#e63946", borderBottom: "2px solid #e63946", paddingBottom: "5px" }}>
+            Profile Settings
+          </span>
+          <span onClick={() => router.push("/donorDashboard?tab=reports")} style={{ cursor: "pointer", fontSize: "14px", fontWeight: "600", color: "#475569", paddingBottom: "5px" }}>
+            My Reports
+          </span>
+        </div>
 
         <header style={{ marginBottom: "36px" }}>
           <h1 style={{ margin: 0, fontSize: "28px", fontWeight: "800", color: "#0f172a", letterSpacing: "-0.8px" }}>
@@ -489,6 +564,5 @@ export default function ProfilePage() {
           </div>
         </div>
       </main>
-    </div>
-  );
+      </div>
 }

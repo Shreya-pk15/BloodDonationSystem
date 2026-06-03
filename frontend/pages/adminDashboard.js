@@ -468,9 +468,9 @@ export default function AdminDashboard() {
                           </td>
                           <td style={tableCellStyle}>
                             <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
-                              {u.role === "hospital" && (
-                                <button onClick={() => handleVerify(u)} style={{ padding: "6px 14px", borderRadius: "8px", border: "1px solid transparent", cursor: "pointer", fontSize: "12px", fontWeight: "700", background: u.isVerified ? "#f1f5f9" : "linear-gradient(135deg,#16a34a,#15803d)", color: u.isVerified ? "#64748b" : "#fff", transition: "all 0.2s" }}>
-                                  {u.isVerified ? "✓ Verified" : "✔ Verify"}
+                              {u.role === "hospital" && !u.isVerified && (
+                                <button onClick={() => handleVerify(u)} style={{ padding: "6px 14px", borderRadius: "8px", border: "1px solid transparent", cursor: "pointer", fontSize: "12px", fontWeight: "700", background: "linear-gradient(135deg,#16a34a,#15803d)", color: "#fff", transition: "all 0.2s" }}>
+                                  ✔ Verify
                                 </button>
                               )}
                               <button

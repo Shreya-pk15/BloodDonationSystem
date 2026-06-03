@@ -7,6 +7,7 @@ export default function Register() {
 
   const [form, setForm] = useState({
     name: "",
+    username: "",
     email: "",
     phone: "",
     password: "",
@@ -83,6 +84,11 @@ export default function Register() {
     setErrorMsg("");
 
     try {
+      if (!form.username) {
+        setErrorMsg("Username is required");
+        setLoading(false);
+        return;
+      }
       if (form.role === "donor" && !form.bloodGroup) {
         setErrorMsg("Blood group is required for donors");
         setLoading(false);
@@ -120,9 +126,21 @@ export default function Register() {
 
         <form onSubmit={handleRegister} className="register-form">
           <div className="form-grid">
-            <div className="input-group">
+              <div className="input-group">
               <label>Full Name / Hospital Name</label>
               <input type="text" name="name" placeholder="John Doe" value={form.name} onChange={handleChange} required />
+            </div>
+
+            <div className="input-group">
+              <label>Username</label>
+              <input
+                type="text"
+                name="username"
+                placeholder="your-username"
+                value={form.username}
+                onChange={handleChange}
+                required
+              />
             </div>
 
             <div className="input-group">
