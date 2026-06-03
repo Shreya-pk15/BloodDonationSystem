@@ -125,25 +125,42 @@ export default function DonationHistoryPage() {
           {/* NAVBAR PROFILE SECTION & AVAILABILITY SELECTOR */}
           {userProfile && (
             <div style={{ display: "flex", alignItems: "center", gap: "15px", borderLeft: "2px solid #eee", paddingLeft: "20px" }}>
-              {/* Availability Selector Buttons */}
-              <div style={{ display: "flex", borderRadius: "8px", background: "#e5e7eb", padding: "3px", gap: "2px" }}>
+              {/* Availability Selector (Premium Industry-Level Segmented Control) */}
+              <div style={{ display: "flex", borderRadius: "30px", background: "#f1f5f9", padding: "4px", gap: "4px", border: "1px solid #e2e8f0", alignItems: "center" }}>
                 {["available", "busy", "offline"].map((statusOption) => {
                   const active = availability === statusOption;
+                  const dotColor = statusOption === "available" ? "#10b981" : statusOption === "busy" ? "#f59e0b" : "#64748b";
+                  const activeBg = statusOption === "available" ? "#10b981" : statusOption === "busy" ? "#f59e0b" : "#64748b";
+                  
                   return (
                     <button
                       key={statusOption}
                       onClick={() => updateAvailabilityState(statusOption)}
                       style={{
-                        border: "none", borderRadius: "6px", padding: "5px 10px",
-                        fontSize: "11px", fontWeight: "700", cursor: "pointer",
-                        textTransform: "capitalize", transition: "all 0.2s",
-                        backgroundColor: active ? getStatusColor(statusOption) : "transparent",
-                        color: active ? "#ffffff" : "#475569",
-                        boxShadow: active ? "0 2px 6px rgba(0,0,0,0.06)" : "none"
+                        border: "none",
+                        borderRadius: "20px",
+                        padding: "6px 14px",
+                        fontSize: "12px",
+                        fontWeight: "700",
+                        cursor: "pointer",
+                        textTransform: "capitalize",
+                        transition: "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
+                        backgroundColor: active ? activeBg : "transparent",
+                        color: active ? "#ffffff" : "#64748b",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "6px",
+                        boxShadow: active ? "0 2px 8px rgba(0,0,0,0.12)" : "none"
                       }}
-                      title={statusOption.charAt(0).toUpperCase() + statusOption.slice(1)}
                     >
-                      {statusOption.charAt(0).toUpperCase()}
+                      <span style={{
+                        width: "6px",
+                        height: "6px",
+                        borderRadius: "50%",
+                        backgroundColor: active ? "#ffffff" : dotColor,
+                        transition: "background-color 0.25s"
+                      }} />
+                      {statusOption}
                     </button>
                   );
                 })}

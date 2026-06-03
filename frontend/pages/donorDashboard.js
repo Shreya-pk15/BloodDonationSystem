@@ -225,6 +225,20 @@ export default function DonorDashboard() {
     }
   };
 
+  const declineRequest = async (id) => {
+    try {
+      const token = localStorage.getItem("token");
+      await axios.post(`http://localhost:5000/api/requests/decline/${id}`, {}, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      alert("✅ Decline successful");
+      fetchRequests();
+      fetchProfile();
+    } catch (err) {
+      alert(err.response?.data?.message || "Failed to decline request");
+    }
+  };
+
   const getEligibilityInfo = () => {
     if (!userProfile?.lastDonationDate) {
       return { eligible: true, text: "Eligible to Donate" };
@@ -405,13 +419,45 @@ export default function DonorDashboard() {
             {/* NAVBAR PROFILE PHOTO & LOGOUT */}
             {userProfile && (
               <div style={{ display: "flex", alignItems: "center", gap: "15px", borderLeft: "2px solid #eee", paddingLeft: "20px" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                    <span style={{ fontSize: "12px", fontWeight: "600", color: availability === "available" ? "#10b981" : availability === "busy" ? "#f59e0b" : "#64748b", display: "flex", alignItems: "center", gap: "4px" }}>
-                      <span style={{ width: "6px", height: "6px", borderRadius: "50%", background: getStatusColor(availability), display: "inline-block" }} />
-                      {availability.charAt(0).toUpperCase() + availability.slice(1)}
-                    </span>
-                  </div>
+                {/* Availability Selector (Premium Industry-Level Segmented Control) */}
+                <div style={{ display: "flex", borderRadius: "30px", background: "#f1f5f9", padding: "4px", gap: "4px", border: "1px solid #e2e8f0", alignItems: "center" }}>
+                  {["available", "busy", "offline"].map((statusOption) => {
+                    const active = availability === statusOption;
+                    const dotColor = statusOption === "available" ? "#10b981" : statusOption === "busy" ? "#f59e0b" : "#64748b";
+                    const activeBg = statusOption === "available" ? "#10b981" : statusOption === "busy" ? "#f59e0b" : "#64748b";
+                    
+                    return (
+                      <button
+                        key={statusOption}
+                        onClick={() => updateAvailabilityState(statusOption)}
+                        style={{
+                          border: "none",
+                          borderRadius: "20px",
+                          padding: "6px 14px",
+                          fontSize: "12px",
+                          fontWeight: "700",
+                          cursor: "pointer",
+                          textTransform: "capitalize",
+                          transition: "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
+                          backgroundColor: active ? activeBg : "transparent",
+                          color: active ? "#ffffff" : "#64748b",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "6px",
+                          boxShadow: active ? "0 2px 8px rgba(0,0,0,0.12)" : "none"
+                        }}
+                      >
+                        <span style={{
+                          width: "6px",
+                          height: "6px",
+                          borderRadius: "50%",
+                          backgroundColor: active ? "#ffffff" : dotColor,
+                          transition: "background-color 0.25s"
+                        }} />
+                        {statusOption}
+                      </button>
+                    );
+                  })}
                 </div>
                 {userProfile.profilePhoto ? (
                   AVATAR_PRESETS.find(p => p.emoji === userProfile.profilePhoto) ? (
@@ -625,6 +671,19 @@ export default function DonorDashboard() {
                               >
                                 💬 Contact Hospital
                               </button>
+                              {req.acceptedDonors && userProfile && req.acceptedDonors.includes(userProfile._id) && (
+                                <button
+                                  onClick={() => declineRequest(req._id)}
+                                  style={{
+                                    backgroundColor: "#fff5f5", color: "#e11d48",
+                                    border: "1px solid #fca5a5", borderRadius: "10px",
+                                    padding: "8px 14px", fontSize: "12px", fontWeight: "700",
+                                    cursor: "pointer"
+                                  }}
+                                >
+                                  ❌ Decline
+                                </button>
+                              )}
 
                               <button
                                 onClick={() => setReportTarget({ hospitalId: req.hospitalId._id, hospitalName: req.hospitalId.name, requestId: req._id })}

@@ -1,5 +1,6 @@
 const User = require("../models/User");
 const Report = require("../models/Report");
+const bcrypt = require("bcrypt");
 
 const updateLocation = async (req, res) => {
   try {
@@ -247,6 +248,43 @@ const getDonorEligibility = async (req, res) => {
   }
 };
 
+const changePassword = async (req, res) => {
+  try {
+    console.log('🔒 changePassword called with body:', req.body, 'userId:', req.user?.userId);
+    const userId = req.user.userId;
+    const { currentPassword, newPassword } = req.body;
+
+    if (!currentPassword || !newPassword) {
+      console.warn('Missing password fields');
+      return res.status(400).json({ message: "Current and new passwords are required" });
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      console.warn('User not found for id', userId);
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
+    if (!isMatch) {
+      console.warn('Incorrect current password for user', userId);
+      return res.status(400).json({ message: "Incorrect current password" });
+    }
+
+    const hashed = await bcrypt.hash(newPassword, 10);
+    // Update password directly without triggering full document validation
+    await User.findByIdAndUpdate(userId, { password: hashed }, { new: true, runValidators: false });
+    console.log('✅ Password updated for user', userId, 'hashed:', hashed);
+
+    // Fetch updated user (excluding password) for verification
+    const updatedUser = await User.findById(userId).select('-password');
+    res.status(200).json({ message: "Password updated successfully", user: updatedUser });
+  } catch (err) {
+    console.error('Error in changePassword:', err);
+    res.status(500).json({ message: "Server error", error: err.message });
+  }
+};
+
 module.exports = {
   updateLocation,
   updateAvailability,
@@ -257,4 +295,5 @@ module.exports = {
   deleteMyReport,
   getDonationHistory,
   getDonorEligibility,
+  changePassword,
 };

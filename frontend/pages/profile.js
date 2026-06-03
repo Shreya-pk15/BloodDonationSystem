@@ -1,6 +1,7 @@
 import axios from "axios";
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
+import ResetPasswordModal from "../components/ResetPasswordModal";
 
 // Preset cartoon avatars for quick personalization
 const AVATAR_PRESETS = [
@@ -17,6 +18,7 @@ export default function ProfilePage() {
   const [userProfile, setUserProfile] = useState(null);
   const [availability, setAvailability] = useState("available");
   const [loading, setLoading] = useState(true);
+  const [isResetModalOpen, setIsResetModalOpen] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     phone: "",
@@ -26,6 +28,25 @@ export default function ProfilePage() {
     lat: 0,
     lng: 0
   });
+
+  const [passwordData, setPasswordData] = useState({
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: ""
+  });
+  
+  const [openFaq, setOpenFaq] = useState(null);
+
+  const toggleFaq = (index) => {
+    setOpenFaq(openFaq === index ? null : index);
+  };
+
+  const FAQS = [
+    { q: "How often can I donate blood?", a: "To ensure donor safety, you are eligible to donate whole blood once every 90 days. The system automatically tracks this and calculates your remaining cooldown days on your dashboard statistics." },
+    { q: "What precautions should I take before donating?", a: "Stay hydrated by drinking plenty of water, consume a healthy, low-fat meal prior to your appointment, and bring a government-issued photo ID. Avoid alcohol and heavy exercise 24 hours before donating." },
+    { q: "How are my location settings used?", a: "Your city and coordinates (lat/lng) are used solely to match you with compatible emergency blood requests nearby. Your precise location is never exposed publicly to unverified users." },
+    { q: "Can I directly communicate with the hospital?", a: "Yes, once you accept or view a broadcast request from a hospital, you can use the built-in real-time Live Chat tab to message their coordinators directly." }
+  ];
 
   const getStatusColor = (status) => {
     const s = status || availability;
@@ -143,6 +164,26 @@ export default function ProfilePage() {
     }
   };
 
+  const handleChangePassword = async (e) => {
+    e.preventDefault();
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      return alert("New passwords do not match");
+    }
+    try {
+      const token = localStorage.getItem("token");
+      await axios.put("http://localhost:5000/api/user/change-password", {
+        currentPassword: passwordData.currentPassword,
+        newPassword: passwordData.newPassword
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      alert("🎉 Password updated successfully!");
+      setPasswordData({ currentPassword: "", newPassword: "", confirmPassword: "" });
+    } catch (err) {
+      alert(err.response?.data?.message || "Password Update Failed");
+    }
+  };
+
   useEffect(() => {
     fetchProfile();
   }, []);
@@ -160,215 +201,177 @@ export default function ProfilePage() {
   }
 
   return (
-    <div style={{ minHeight: "100vh", backgroundColor: "#f8fafc", fontFamily: "'Inter', system-ui, sans-serif", display: "flex", flexDirection: "column", color: "#334155" }}>
+    <div style={{ minHeight: "100vh", backgroundColor: "#f0f2f5", fontFamily: "'Inter', system-ui, sans-serif", color: "#334155" }}>
       <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+      <style>{`
+        .premium-input {
+          padding: 12px 16px;
+          border-radius: 12px;
+          border: 1.5px solid #cbd5e1;
+          font-size: 14px;
+          outline: none;
+          transition: all 0.2s ease;
+          background-color: #ffffff;
+        }
+        .premium-input:focus {
+          border-color: #e63946;
+          box-shadow: 0 0 0 4px rgba(230, 57, 70, 0.15);
+        }
+        .premium-input:disabled {
+          background-color: #f1f5f9;
+          border-color: #e2e8f0;
+          color: #64748b;
+          cursor: not-allowed;
+        }
+        .premium-input-lock {
+          padding: 12px 16px;
+          border-radius: 12px;
+          border: 1.5px solid #e2e8f0;
+          background-color: #f1f5f9;
+          color: #64748b;
+          font-size: 14px;
+          cursor: not-allowed;
+          outline: none;
+        }
+        .preset-btn:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+        .save-btn {
+          background-color: #e63946;
+          color: white;
+          padding: 14px;
+          border: none;
+          border-radius: 12px;
+          font-weight: 800;
+          cursor: pointer;
+          margin-top: 10px;
+          font-size: 15px;
+          box-shadow: 0 6px 20px rgba(230,57,70,0.2);
+          transition: all 0.25s ease;
+        }
+        .save-btn:hover {
+          background-color: #d62839;
+          transform: translateY(-1px);
+          box-shadow: 0 8px 24px rgba(230,57,70,0.3);
+        }
+        .auto-btn {
+          padding: 12px 18px;
+          background-color: #0f172a;
+          color: #fff;
+          border: none;
+          border-radius: 10px;
+          cursor: pointer;
+          font-weight: 700;
+          font-size: 12px;
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          transition: all 0.2s ease;
+        }
+        .auto-btn:hover {
+          background-color: #1e293b;
+          transform: translateY(-1px);
+          box-shadow: 0 4px 12px rgba(15,23,42,0.15);
+        }
+      `}</style>
 
-      {/* TOP NAVBAR */}
-      <nav style={{
-        backgroundColor: "#ffffff",
-        padding: "18px 28px",
-        boxShadow: "0 2px 10px rgba(0,0,0,0.08)",
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-        width: "100%",
-        position: "sticky",
-        top: 0,
-        zIndex: 200,
-      }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-          <h2 style={{ margin: 0, color: "#1d3557", display: "flex", alignItems: "center", gap: "10px", fontSize: "20px", fontWeight: 800 }}>
-            👤 Profile
+      {/* 🔝 NAVBAR */}
+      <nav style={{ backgroundColor: "white", padding: "15px 30px", boxShadow: "0 2px 10px rgba(0,0,0,0.1)", display: "flex", justifyContent: "space-between", alignItems: "center", position: "sticky", top: 0, zIndex: 100 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "15px" }}>
+          <h2 style={{ margin: 0, color: "#e63946", display: "flex", alignItems: "center", gap: "8px" }}>
+            🩸 Donor Dashboard
           </h2>
-          <span style={{ color: "#64748b", fontSize: "13px", fontWeight: 600 }}>
-            Hospital profile settings and availability
-          </span>
         </div>
 
-        <div style={{ display: "flex", alignItems: "center", gap: "18px" }}>
-          <button
-            type="button"
-            onClick={() => router.push("/hospitalDashboard")}
-            style={{
-              background: "transparent",
-              border: "none",
-              color: "#334155",
-              fontWeight: 700,
-              cursor: "pointer",
-              fontSize: "14px",
-            }}
-          >
-            Hospital Dashboard
-          </button>
-          <button
-            type="button"
-            onClick={handleLogout}
-            style={{
-              backgroundColor: "#ef4444",
-              color: "#ffffff",
-              border: "none",
-              borderRadius: "10px",
-              padding: "10px 18px",
-              cursor: "pointer",
-              fontWeight: 700,
-              fontSize: "14px",
-            }}
-          >
-            Logout
-          </button>
+        <div style={{ display: "flex", gap: "25px", alignItems: "center" }}>
+          <span onClick={() => router.push("/donorDashboard")} style={{ cursor: "pointer", fontSize: "14px", fontWeight: "600", color: "#555", paddingBottom: "5px" }}>
+            Emergency Feed
+          </span>
+          <span onClick={() => router.push("/donorDashboard?tab=messages")} style={{ cursor: "pointer", fontSize: "14px", fontWeight: "600", color: "#555", paddingBottom: "5px" }}>
+            💬 Messages
+          </span>
+          <span onClick={() => router.push("/history")} style={{ cursor: "pointer", fontSize: "14px", fontWeight: "600", color: "#555", paddingBottom: "5px" }}>
+            Donation History
+          </span>
+          <span onClick={() => router.push("/donorDashboard?tab=reports")} style={{ cursor: "pointer", fontSize: "14px", fontWeight: "600", color: "#555", paddingBottom: "5px" }}>
+            My Reports
+          </span>
+          <span style={{ cursor: "pointer", fontSize: "14px", fontWeight: "bold", color: "#e63946", borderBottom: "2px solid #e63946", paddingBottom: "5px" }}>
+            Profile
+          </span>
+
+          {/* NAVBAR PROFILE SECTION & AVAILABILITY SELECTOR */}
+          {userProfile && (
+            <div style={{ display: "flex", alignItems: "center", gap: "15px", borderLeft: "2px solid #eee", paddingLeft: "20px" }}>
+              {/* Availability Selector (Premium Industry-Level Segmented Control) */}
+              <div style={{ display: "flex", borderRadius: "30px", background: "#f1f5f9", padding: "4px", gap: "4px", border: "1px solid #e2e8f0", alignItems: "center" }}>
+                {["available", "busy", "offline"].map((statusOption) => {
+                  const active = availability === statusOption;
+                  const dotColor = statusOption === "available" ? "#10b981" : statusOption === "busy" ? "#f59e0b" : "#64748b";
+                  const activeBg = statusOption === "available" ? "#10b981" : statusOption === "busy" ? "#f59e0b" : "#64748b";
+
+                  return (
+                    <button
+                      key={statusOption}
+                      onClick={() => updateAvailabilityState(statusOption)}
+                      style={{
+                        border: "none",
+                        borderRadius: "20px",
+                        padding: "6px 14px",
+                        fontSize: "12px",
+                        fontWeight: "700",
+                        cursor: "pointer",
+                        textTransform: "capitalize",
+                        transition: "all 0.25s cubic-bezier(0.4, 0, 0.2, 1)",
+                        backgroundColor: active ? activeBg : "transparent",
+                        color: active ? "#ffffff" : "#64748b",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "6px",
+                        boxShadow: active ? "0 2px 8px rgba(0,0,0,0.12)" : "none"
+                      }}
+                    >
+                      <span style={{
+                        width: "6px",
+                        height: "6px",
+                        borderRadius: "50%",
+                        backgroundColor: active ? "#ffffff" : dotColor,
+                        transition: "background-color 0.25s"
+                      }} />
+                      {statusOption}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Profile Photo */}
+              {userProfile.profilePhoto ? (
+                userProfile.profilePhoto.length <= 4 ? (
+                  <span style={{ fontSize: "24px" }}>{userProfile.profilePhoto}</span>
+                ) : (
+                  <img src={userProfile.profilePhoto} alt="Nav" style={{ height: "36px", width: "36px", borderRadius: "50%", objectFit: "cover", border: "2px solid #ddd" }} />
+                )
+              ) : (
+                <div style={{ height: "36px", width: "36px", backgroundColor: "#e63946", color: "white", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "16px", fontWeight: "bold", border: "2px solid #eee" }}>
+                  {(userProfile.name || "").charAt(0).toUpperCase()}
+                </div>
+              )}
+
+              {/* Logout Button */}
+              <button
+                onClick={handleLogout}
+                style={{ backgroundColor: "#ef4444", color: "white", border: "none", padding: "8px 15px", borderRadius: "6px", cursor: "pointer", fontWeight: "bold", boxShadow: "0 2px 4px rgba(0,0,0,0.1)" }}
+              >
+                Logout
+              </button>
+            </div>
+          )}
         </div>
       </nav>
 
-      <div style={{ display: "flex", flex: 1, minHeight: 0 }}>
-        {/* SIDEBAR */}
-      <aside style={{
-        width: "280px", backgroundColor: "#ffffff", borderRight: "1px solid #e2e8f0",
-        display: "flex", flexDirection: "column", padding: "28px 20px", flexShrink: 0,
-        position: "sticky", top: 0, height: "100vh", boxSizing: "border-box"
-      }}>
-        {/* BRANDING */}
-        <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "36px", paddingLeft: "8px" }}>
-          <span style={{ fontSize: "28px" }}>🩸</span>
-          <div>
-            <span style={{ fontSize: "18px", fontWeight: "900", color: "#0f172a", letterSpacing: "-0.5px" }}>HemoLink</span>
-            <div style={{ fontSize: "10px", color: "#e63946", fontWeight: "800", textTransform: "uppercase", letterSpacing: "1.5px", marginTop: "-2px" }}>Donor Hub</div>
-          </div>
-        </div>
-
-        {/* PROFILE MINI-CARD & AVAILABILITY STATE SELECTOR */}
-        <div style={{
-          backgroundColor: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "16px",
-          padding: "16px", marginBottom: "32px", display: "flex", flexDirection: "column", gap: "14px"
-        }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-            <div style={{
-              width: "48px", height: "48px", borderRadius: "50%",
-              backgroundColor: "#fee2e2", border: "2px solid #fff",
-              display: "flex", alignItems: "center", justifyItems: "center",
-              justifyContent: "center", fontSize: "24px", overflow: "hidden",
-              boxShadow: "0 4px 10px rgba(230,57,70,0.1)"
-            }}>
-              {userProfile.profilePhoto ? (
-                AVATAR_PRESETS.find(p => p.emoji === userProfile.profilePhoto) ? (
-                  <span>{userProfile.profilePhoto}</span>
-                ) : (
-                  <img src={userProfile.profilePhoto} alt="Profile" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                )
-              ) : (
-                <span style={{ color: "#e63946", fontWeight: "800", fontSize: "18px" }}>
-                  {(userProfile.name || "").charAt(0).toUpperCase()}
-                </span>
-              )}
-            </div>
-
-            <div style={{ flex: 1, overflow: "hidden" }}>
-              <div style={{ fontWeight: "700", color: "#0f172a", fontSize: "14px", textOverflow: "ellipsis", overflow: "hidden", whiteSpace: "nowrap" }}>
-                {userProfile.name}
-              </div>
-              <div style={{ display: "flex", gap: "6px", alignItems: "center", marginTop: "3px" }}>
-                <span style={{ fontSize: "11px", fontWeight: "800", color: "#e63946", backgroundColor: "#fff5f5", padding: "1px 6px", borderRadius: "6px", border: "1px solid #fed7aa" }}>
-                  {userProfile.bloodGroup || "Bg?"}
-                </span>
-                <span style={{ fontSize: "11px", color: "#64748b", fontWeight: "500" }}>Donor</span>
-              </div>
-            </div>
-          </div>
-
-          <div style={{ borderTop: "1px solid #e2e8f0", paddingTop: "12px" }}>
-            <label style={{ fontSize: "10px", fontWeight: "800", color: "#64748b", textTransform: "uppercase", letterSpacing: "0.5px", display: "block", marginBottom: "8px" }}>
-              Availability Status
-            </label>
-            <div style={{ display: "flex", borderRadius: "10px", background: "#cbd5e144", padding: "3px", gap: "2px" }}>
-              {["available", "busy", "offline"].map((statusOption) => {
-                const active = availability === statusOption;
-                return (
-                  <button
-                    key={statusOption}
-                    onClick={() => updateAvailabilityState(statusOption)}
-                    style={{
-                      flex: 1, border: "none", borderRadius: "8px", padding: "6px 2px",
-                      fontSize: "10px", fontWeight: "700", cursor: "pointer",
-                      textTransform: "capitalize", transition: "all 0.2s",
-                      backgroundColor: active ? getStatusColor(statusOption) : "transparent",
-                      color: active ? "#ffffff" : "#475569",
-                      boxShadow: active ? "0 2px 6px rgba(0,0,0,0.06)" : "none"
-                    }}
-                  >
-                    {statusOption}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-
-        {/* NAVIGATION ITEMS */}
-        <nav style={{ display: "flex", flexDirection: "column", gap: "6px", flex: 1 }}>
-          {[
-            { id: "requests", label: "Emergency Feed", icon: "📢", path: "/donorDashboard" },
-            { id: "messages", label: "Messages", icon: "💬", path: "/donorDashboard?tab=messages" },
-            { id: "profile", label: "Donation History", icon: "⏳", path: "/history" },
-            { id: "settings", label: "Profile Settings", icon: "⚙️", path: "/profile" },
-            { id: "reports", label: "My Reports", icon: "🚨", path: "/donorDashboard?tab=reports" },
-          ].map((item) => {
-            const active = item.id === "settings";
-            return (
-              <button
-                key={item.id}
-                onClick={() => router.push(item.path)}
-                style={{
-                  display: "flex", alignItems: "center", gap: "12px", width: "100%",
-                  border: "none", borderRadius: "12px", padding: "12px 14px",
-                  cursor: "pointer", transition: "all 0.2s", textAlign: "left",
-                  backgroundColor: active ? "rgba(230,57,70,0.06)" : "transparent",
-                  color: active ? "#e63946" : "#475569",
-                  fontWeight: active ? "700" : "600",
-                  fontSize: "14px"
-                }}
-              >
-                <span style={{ fontSize: "16px" }}>{item.icon}</span>
-                <span>{item.label}</span>
-              </button>
-            );
-          })}
-        </nav>
-
-        {/* LOGOUT */}
-        <button
-          onClick={handleLogout}
-          style={{
-            display: "flex", alignItems: "center", gap: "12px", width: "100%",
-            border: "1px solid #fee2e2", borderRadius: "12px", padding: "12px 14px",
-            cursor: "pointer", transition: "all 0.2s", textAlign: "left",
-            backgroundColor: "#fff5f5", color: "#ef4444", fontWeight: "700", fontSize: "14px",
-            marginTop: "auto"
-          }}
-        >
-          <span>🚪</span>
-          <span>Logout</span>
-        </button>
-      </aside>
-
-      {/* MAIN CONTENT CONTAINER */}
-      <main style={{ flex: 1, padding: "40px", boxSizing: "border-box", overflowY: "auto", height: "100vh" }}>
-
-        <div style={{ backgroundColor: "#ffffff", borderRadius: "18px", padding: "18px 22px", display: "flex", flexWrap: "wrap", gap: "22px", alignItems: "center", boxShadow: "0 4px 22px rgba(15, 23, 43, 0.06)", marginBottom: "28px" }}>
-          <span onClick={() => router.push("/donorDashboard")} style={{ cursor: "pointer", fontSize: "14px", fontWeight: "600", color: "#475569", paddingBottom: "5px" }}>
-            Emergency Feed
-          </span>
-          <span onClick={() => router.push("/donorDashboard?tab=messages")} style={{ cursor: "pointer", fontSize: "14px", fontWeight: "600", color: "#475569", paddingBottom: "5px" }}>
-            💬 Messages
-          </span>
-          <span onClick={() => router.push("/history")} style={{ cursor: "pointer", fontSize: "14px", fontWeight: "600", color: "#475569", paddingBottom: "5px" }}>
-            Donation History
-          </span>
-          <span style={{ cursor: "pointer", fontSize: "14px", fontWeight: "700", color: "#e63946", borderBottom: "2px solid #e63946", paddingBottom: "5px" }}>
-            Profile Settings
-          </span>
-          <span onClick={() => router.push("/donorDashboard?tab=reports")} style={{ cursor: "pointer", fontSize: "14px", fontWeight: "600", color: "#475569", paddingBottom: "5px" }}>
-            My Reports
-          </span>
-        </div>
+      {/* MAIN CONTAINER */}
+      <main style={{ maxWidth: "1200px", margin: "30px auto", padding: "0 20px", boxSizing: "border-box" }}>
 
         <header style={{ marginBottom: "36px" }}>
           <h1 style={{ margin: 0, fontSize: "28px", fontWeight: "800", color: "#0f172a", letterSpacing: "-0.8px" }}>
@@ -381,76 +384,94 @@ export default function ProfilePage() {
 
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1.6fr", gap: "28px", alignItems: "start" }}>
 
-          {/* Left panel: Avatar presets picker */}
-          <div style={{ backgroundColor: "#ffffff", border: "1px solid #e2e8f0", borderRadius: "20px", padding: "24px" }}>
-            <h3 style={{ margin: "0 0 16px 0", fontSize: "16px", fontWeight: "800", color: "#0f172a" }}>
-              Select Avatar Profile
-            </h3>
+          {/* Left Column Stack */}
+          <div style={{ display: "flex", flexDirection: "column", gap: "28px" }}>
+            {/* Left panel: Avatar presets picker */}
+            <div style={{ backgroundColor: "#ffffff", border: "1px solid #e2e8f0", borderRadius: "20px", padding: "24px" }}>
+              <h3 style={{ margin: "0 0 16px 0", fontSize: "16px", fontWeight: "800", color: "#0f172a" }}>
+                Select Avatar Profile
+              </h3>
 
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "16px", marginBottom: "24px" }}>
-              <div style={{
-                width: "100px", height: "100px", borderRadius: "50%",
-                backgroundColor: "#fee2e2", border: "4px solid #fff",
-                boxShadow: "0 10px 25px rgba(230,57,70,0.15)",
-                display: "flex", alignItems: "center", justifyContent: "center",
-                fontSize: "52px", overflow: "hidden"
-              }}>
-                {formData.profilePhoto ? (
-                  AVATAR_PRESETS.find(p => p.emoji === formData.profilePhoto) ? (
-                    <span>{formData.profilePhoto}</span>
+              <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "16px", marginBottom: "24px" }}>
+                <div style={{
+                  width: "100px", height: "100px", borderRadius: "50%",
+                  backgroundColor: "#fee2e2", border: "4px solid #fff",
+                  boxShadow: "0 10px 25px rgba(230,57,70,0.15)",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  fontSize: "52px", overflow: "hidden"
+                }}>
+                  {formData.profilePhoto ? (
+                    AVATAR_PRESETS.find(p => p.emoji === formData.profilePhoto) ? (
+                      <span>{formData.profilePhoto}</span>
+                    ) : (
+                      <img src={formData.profilePhoto} alt="Avatar" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                    )
                   ) : (
-                    <img src={formData.profilePhoto} alt="Avatar" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                  )
-                ) : (
-                  <span style={{ color: "#e63946", fontWeight: "800", fontSize: "36px" }}>
-                    {(formData.name || "").charAt(0).toUpperCase()}
-                  </span>
-                )}
-              </div>
-              <span style={{ fontSize: "12px", color: "#64748b", fontWeight: "600" }}>
-                Active Avatar Profile Preview
-              </span>
-            </div>
-
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "10px", marginBottom: "20px" }}>
-              {AVATAR_PRESETS.map((preset, idx) => {
-                const isSelected = formData.profilePhoto === preset.emoji;
-                return (
-                  <button
-                    key={idx}
-                    type="button"
-                    onClick={() => setFormData({ ...formData, profilePhoto: preset.emoji })}
-                    style={{
-                      backgroundColor: isSelected ? "#fee2e2" : "#f8fafc",
-                      border: isSelected ? "2.5px solid #e63946" : "1.5px solid #e2e8f0",
-                      borderRadius: "12px", padding: "12px 6px", cursor: "pointer",
-                      display: "flex", flexDirection: "column", alignItems: "center", gap: "4px",
-                      transition: "all 0.2s"
-                    }}
-                  >
-                    <span style={{ fontSize: "28px" }}>{preset.emoji}</span>
-                    <span style={{ fontSize: "9px", color: "#64748b", fontWeight: "700", whiteSpace: "nowrap" }}>
-                      {preset.label}
+                    <span style={{ color: "#e63946", fontWeight: "800", fontSize: "36px" }}>
+                      {(formData.name || "").charAt(0).toUpperCase()}
                     </span>
-                  </button>
-                );
-              })}
+                  )}
+                </div>
+                <span style={{ fontSize: "12px", color: "#64748b", fontWeight: "600" }}>
+                  Active Avatar Profile Preview
+                </span>
+              </div>
+
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "10px", marginBottom: "20px" }}>
+                {AVATAR_PRESETS.map((preset, idx) => {
+                  const isSelected = formData.profilePhoto === preset.emoji;
+                  return (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => setFormData({ ...formData, profilePhoto: preset.emoji })}
+                      style={{
+                        backgroundColor: isSelected ? "#fee2e2" : "#f8fafc",
+                        border: isSelected ? "2.5px solid #e63946" : "1.5px solid #e2e8f0",
+                        borderRadius: "12px", padding: "12px 6px", cursor: "pointer",
+                        display: "flex", flexDirection: "column", alignItems: "center", gap: "4px",
+                        transition: "all 0.2s"
+                      }}
+                    >
+                      <span style={{ fontSize: "28px" }}>{preset.emoji}</span>
+                      <span style={{ fontSize: "9px", color: "#64748b", fontWeight: "700", whiteSpace: "nowrap" }}>
+                        {preset.label}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+
+              <div style={{ borderTop: "1px solid #e2e8f0", paddingTop: "16px" }}>
+                <label style={{ display: "block", fontSize: "12px", fontWeight: "700", color: "#475569", marginBottom: "8px" }}>
+                  Or Upload Custom Image
+                </label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handlePhotoUpload}
+                  style={{
+                    width: "100%", fontSize: "11px", color: "#64748b",
+                    padding: "8px 10px", border: "1.5px solid #cbd5e1", borderRadius: "10px"
+                  }}
+                />
+              </div>
             </div>
 
-            <div style={{ borderTop: "1px solid #e2e8f0", paddingTop: "16px" }}>
-              <label style={{ display: "block", fontSize: "12px", fontWeight: "700", color: "#475569", marginBottom: "8px" }}>
-                Or Upload Custom Image
-              </label>
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handlePhotoUpload}
-                style={{
-                  width: "100%", fontSize: "11px", color: "#64748b",
-                  padding: "8px 10px", border: "1.5px solid #cbd5e1", borderRadius: "10px"
-                }}
-              />
+            {/* Change Password Card (replaced with modal trigger) */}
+            <div style={{ backgroundColor: "#ffffff", border: "1px solid #e2e8f0", borderRadius: "20px", padding: "28px" }}>
+              <h3 style={{ margin: "0 0 4px 0", fontSize: "16px", fontWeight: "800", color: "#0f172a" }}>
+                🔒 Reset Password
+              </h3>
+              <p style={{ margin: "0 0 20px 0", color: "#64748b", fontSize: "13px" }}>
+                Update your account password to keep your credentials secure.
+              </p>
+              <button className="save-btn" style={{ marginTop: "8px" }} onClick={() => setIsResetModalOpen(true)}>
+                Change Password
+              </button>
             </div>
+            {/* Reset Password Modal */}
+            <ResetPasswordModal isOpen={isResetModalOpen} onClose={() => setIsResetModalOpen(false)} />
           </div>
 
           {/* Right panel: Profile Fields Form */}
@@ -467,7 +488,7 @@ export default function ProfilePage() {
                     type="text"
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    style={{ padding: "12px 14px", borderRadius: "10px", border: "1.5px solid #cbd5e1", fontSize: "14px", outline: "none" }}
+                    className="premium-input"
                     required
                   />
                 </div>
@@ -478,7 +499,7 @@ export default function ProfilePage() {
                     type="text"
                     value={formData.phone}
                     onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                    style={{ padding: "12px 14px", borderRadius: "10px", border: "1.5px solid #cbd5e1", fontSize: "14px", outline: "none" }}
+                    className="premium-input"
                     required
                   />
                 </div>
@@ -491,7 +512,7 @@ export default function ProfilePage() {
                     type="email"
                     value={userProfile.email}
                     disabled
-                    style={{ padding: "12px 14px", borderRadius: "10px", border: "1.5px solid #e2e8f0", backgroundColor: "#f1f5f9", color: "#64748b", fontSize: "14px", cursor: "not-allowed" }}
+                    className="premium-input-lock"
                   />
                 </div>
 
@@ -499,8 +520,8 @@ export default function ProfilePage() {
                   <label style={{ fontSize: "11px", fontWeight: "800", color: "#475569", textTransform: "uppercase" }}>Blood Group</label>
                   <select
                     value={formData.bloodGroup}
-                    onChange={(e) => setFormData({ ...formData, bloodGroup: e.target.value })}
-                    style={{ padding: "12px 14px", borderRadius: "10px", border: "1.5px solid #cbd5e1", fontSize: "14px", outline: "none", backgroundColor: "#fff" }}
+                    disabled
+                    className="premium-input-lock"
                     required
                   >
                     <option value="">Select Blood Group</option>
@@ -521,17 +542,14 @@ export default function ProfilePage() {
                     placeholder="Enter city"
                     value={formData.city}
                     onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                    style={{ padding: "12px 14px", borderRadius: "10px", border: "1.5px solid #cbd5e1", fontSize: "14px", outline: "none", flex: 1 }}
+                    className="premium-input"
+                    style={{ flex: 1 }}
                     required
                   />
                   <button
                     type="button"
                     onClick={handleAutoLocation}
-                    style={{
-                      padding: "12px 18px", backgroundColor: "#0f172a", color: "#fff",
-                      border: "none", borderRadius: "10px", cursor: "pointer",
-                      fontWeight: "700", fontSize: "12px", display: "flex", alignItems: "center", gap: "6px"
-                    }}
+                    className="auto-btn"
                   >
                     📍 Auto Detect
                   </button>
@@ -551,18 +569,16 @@ export default function ProfilePage() {
 
               <button
                 type="submit"
-                style={{
-                  backgroundColor: "#e63946", color: "white", padding: "14px",
-                  border: "none", borderRadius: "12px", fontWeight: "800",
-                  cursor: "pointer", marginTop: "10px", fontSize: "15px",
-                  boxShadow: "0 6px 20px rgba(230,57,70,0.25)", transition: "all 0.2s"
-                }}
+                className="save-btn"
               >
                 Save Profile Configuration
               </button>
             </form>
           </div>
         </div>
+
+
       </main>
-      </div>
+    </div>
+  );
 }

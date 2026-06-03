@@ -484,6 +484,55 @@ const cancelRequest = async (req, res) => {
     res.status(500).json({ message: "Server error", error: err.message });
   }
 };
+// DECLINE REQUEST (Donor)
+const declineRequest = async (req, res) => {
+  try {
+    const requestId = req.params.id;
+    const donor = req.donor || (await User.findById(req.user.userId));
+    if (!donor) {
+      return res.status(404).json({ message: "Donor not found" });
+    }
+    // Find request where donor has accepted
+    const request = await Request.findOne({
+      _id: requestId,
+      status: { $in: ["open", "fulfilled"] },
+      acceptedDonors: donor._id,
+    });
+    if (!request) {
+      return res.status(400).json({ message: "Request not found or not accepted by you" });
+    }
+    // Remove donor from acceptedDonors and donorProgress
+    request.acceptedDonors = request.acceptedDonors.filter(id => id.toString() !== donor._id.toString());
+    request.donorProgress = request.donorProgress.filter(p => p.donorId.toString() !== donor._id.toString());
+    // If request was fulfilled and now not enough donors, revert status
+    if (request.status === "fulfilled" && request.acceptedDonors.length < request.units) {
+      request.status = "open";
+      request.broadcastStatus = "active";
+    }
+    await request.save();
+    const io = req.app.get("io");
+    const payload = {
+      requestId: request._id,
+      acceptedCount: request.acceptedDonors.length,
+      units: request.units,
+      status: request.status,
+      donorInfo: {
+        _id: donor._id,
+        name: donor.name,
+        email: donor.email,
+        phone: donor.phone,
+        bloodGroup: donor.bloodGroup,
+        availability: donor.availability,
+      },
+    };
+    // Notify hospital about donor decline
+    emitHospitalRequestEvent(io, request.hospitalId, "donor-declined", payload);
+    return res.status(200).json({ message: "Declined successfully", acceptedCount: request.acceptedDonors.length, status: request.status });
+  } catch (error) {
+    return res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
 
 const extendBroadcast = async (req, res) => {
   try {
@@ -525,6 +574,7 @@ const extendBroadcast = async (req, res) => {
 };
 
 module.exports = {
+  declineRequest,
   createRequest,
   getRequests,
   acceptRequest,

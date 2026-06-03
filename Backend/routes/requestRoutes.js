@@ -9,6 +9,7 @@ const {
   createRequest,
   getRequests,
   acceptRequest,
+  declineRequest,
   getHospitalRequests,
   getRequestById,
   completeRequest,
@@ -33,5 +34,6 @@ router.put("/:id", authMiddleware, hospitalMiddleware, editRequest);
 // Donor endpoints
 router.get("/", authMiddleware, donorMiddleware, getRequests);
 router.post("/accept/:id", authMiddleware, donorMiddleware, acceptRequest);
+router.post("/decline/:id", authMiddleware, donorMiddleware, declineRequest);
 
 module.exports = router;
