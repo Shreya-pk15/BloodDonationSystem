@@ -6,6 +6,7 @@ export default function ForgotPassword() {
     const router = useRouter();
 
     const [email, setEmail] = useState("");
+    const [confirmEmail, setConfirmEmail] = useState("");
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState("");
     const [error, setError] = useState("");
@@ -19,6 +20,10 @@ export default function ForgotPassword() {
 
         if (!email.trim()) {
             setError("Please enter your email address");
+            setLoading(false);
+            return;
+        } else if (email !== confirmEmail) {
+            setError("Emails do not match");
             setLoading(false);
             return;
         }
@@ -74,6 +79,17 @@ export default function ForgotPassword() {
                                 value={email}
                                 onChange={(e) => {
                                     setEmail(e.target.value);
+                                    setError("");
+                                }}
+                                required
+                            />
+                            <label>Confirm Email Address</label>
+                            <input
+                                type="email"
+                                placeholder="confirm@example.com"
+                                value={confirmEmail}
+                                onChange={(e) => {
+                                    setConfirmEmail(e.target.value);
                                     setError("");
                                 }}
                                 required

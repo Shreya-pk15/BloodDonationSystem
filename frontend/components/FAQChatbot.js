@@ -20,7 +20,7 @@ const FAQS = [
     q: "How do I message hospitals?",
     a: "Once you accept or view a broadcast request from a hospital, you can use the built-in real-time Live Chat tab on your dashboard to message their coordinators directly.",
     keywords: ["contact", "chat", "message", "hospital", "communicate", "talk"]
-    },
+  },
   {
     q: "What if I don't want to donate after accepting a request?",
     a: "If you change your mind after accepting, you can decline the request in the dashboard; the system will notify the hospital and set your status back to available.",

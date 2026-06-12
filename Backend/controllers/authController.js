@@ -82,15 +82,23 @@ const forgotPassword = async (req, res) => {
 
     const normalizedEmail = email.toLowerCase().trim();
     const user = await User.findOne({ email: normalizedEmail });
-    if (!user) return res.status(404).json({ message: "User not found" });
+
+    // Always respond with generic message to avoid email enumeration
+    const genericMessage = "If an account with that email exists, a password reset link has been sent.";
+
+    if (!user) {
+      // Do not reveal that user was not found
+      return res.status(200).json({ message: genericMessage });
+    }
 
     const token = crypto.randomBytes(32).toString("hex");
-    user.passwordResetToken = token;
+    const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+    user.passwordResetToken = hashedToken;
     user.passwordResetExpires = Date.now() + 1000 * 60 * 60; // 1 hour
     await user.save();
 
     await sendPasswordResetEmail(user, token);
-    res.status(200).json({ message: "Password reset link sent to your registered email address." });
+    return res.status(200).json({ message: genericMessage });
   } catch (err) {
     res.status(500).json({ message: "Server Error", error: err.message });
   }
@@ -104,8 +112,9 @@ const resetPassword = async (req, res) => {
       return res.status(400).json({ message: "Token and new password are required" });
     }
 
+    const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
     const user = await User.findOne({
-      passwordResetToken: token,
+      passwordResetToken: hashedToken,
       passwordResetExpires: { $gt: Date.now() },
     });
 
